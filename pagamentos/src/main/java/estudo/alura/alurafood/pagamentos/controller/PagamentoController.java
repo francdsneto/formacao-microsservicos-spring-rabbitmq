@@ -6,6 +6,9 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageBuilder;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +26,9 @@ public class PagamentoController {
     @Autowired
     private PagamentoService service;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
     @GetMapping
     public ResponseEntity<Page<PagamentoDTO>> listar(@PageableDefault(size = 3) Pageable pageable) {
         return ResponseEntity.ok(service.obterTodos(pageable));
@@ -37,7 +43,10 @@ public class PagamentoController {
     @PostMapping
     public ResponseEntity<PagamentoDTO> cadastrar(@RequestBody @Valid PagamentoDTO dados, UriComponentsBuilder uriBuilder) {
         var pagamentoDTO = service.criarPagamento(dados);
-        URI endereco = uriBuilder.path("/ágamentos/{id}").buildAndExpand(pagamentoDTO.getId()).toUri();
+        URI endereco = uriBuilder.path("/pagamentos/{id}").buildAndExpand(pagamentoDTO.getId()).toUri();
+//        Message message = new Message(("Criei um pagamento com o id " + pagamentoDTO.getId()).getBytes());
+//        rabbitTemplate.convertAndSend("pagamento.concluido", pagamentoDTO);
+        rabbitTemplate.convertAndSend("pagamentos.ex","", pagamentoDTO);
         return ResponseEntity.created(endereco).body(pagamentoDTO);
     }
 
