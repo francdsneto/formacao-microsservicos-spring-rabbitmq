@@ -9,6 +9,15 @@ import org.springframework.stereotype.Component;
 public class AvaliacaoListener {
     @RabbitListener(queues = "pagamentos.detalhes-avaliacao")
     public void recebeMensagem(@Payload PagamentoDto pagamento) {
+
+        System.out.println(pagamento.getId());
+        System.out.println(pagamento.getNumero());
+
+        if(pagamento.getNumero().equals("0001"))
+        {
+            throw new RuntimeException("Não consegui processar");
+        }
+
         String mensagem = """
                 Necessário criar registro de avaliação para o pedido: %s 
                 Id do pagamento: %s
